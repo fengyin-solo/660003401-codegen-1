@@ -1,4 +1,4 @@
-import type { CognateSet, LanguageFamily } from '../types'
+import type { CognateSet, LanguageFamily, TimelineBranch, TimelineChain, TimelineEra, TimelineStage } from '../types'
 
 export const LANGUAGE_FAMILIES: LanguageFamily[] = [
   { id: 'ie', name: '印欧语系', color: '#3b82f6', languages: ['英语','法语','德语','西班牙语','俄语','拉丁语'], era: '公元前4000年' },
@@ -39,4 +39,215 @@ export function buildGraph() {
     })
   })
   return { nodes, links }
+}
+
+// ---- 词源演化时间轴 ----
+
+export const TIMELINE_ERAS: TimelineEra[] = [
+  { name: '原始印欧语', start: -4500, end: -2500 },
+  { name: '语族分化', start: -2500, end: -300 },
+  { name: '古典时期', start: -300, end: 600 },
+  { name: '中世纪', start: 600, end: 1500 },
+  { name: '近现代', start: 1500, end: 2026 },
+]
+
+export const BRANCH_COLORS: Record<string, string> = {
+  '英语': '#22d3ee', '法语': '#60a5fa', '德语': '#4ade80',
+  '西班牙语': '#fb923c', '俄语': '#c084fc', '拉丁语': '#facc15',
+}
+
+// 各词根的历史演化链（PIE 起点由 buildTimeline 自动补齐），year 为约略年代（负数为公元前）
+const TIMELINE_BRANCHES: Record<string, { to: string; stages: TimelineStage[] }[]> = {
+  '*pṓds': [
+    { to: '英语', stages: [
+      { word: '*fōts', language: '原始日耳曼语', year: -500, change: 'Grimm定律: p→f' },
+      { word: 'fōt', language: '古英语', year: 900 },
+      { word: 'fot', language: '中古英语', year: 1300 },
+      { word: 'foot', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'pēs', language: '拉丁语', year: -100 },
+      { word: 'pié', language: '古法语', year: 1100, change: 'pēd- 缩约为 pié' },
+      { word: 'pied', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*mātér': [
+    { to: '英语', stages: [
+      { word: '*mōdēr', language: '原始日耳曼语', year: -500 },
+      { word: 'mōdor', language: '古英语', year: 900 },
+      { word: 'moder', language: '中古英语', year: 1300 },
+      { word: 'mother', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'māter', language: '拉丁语', year: -100 },
+      { word: 'mere', language: '古法语', year: 1100 },
+      { word: 'mère', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*pṓtr': [
+    { to: '英语', stages: [
+      { word: '*fadēr', language: '原始日耳曼语', year: -500, change: 'Grimm定律: p→f, t→d' },
+      { word: 'fæder', language: '古英语', year: 900 },
+      { word: 'fader', language: '中古英语', year: 1300 },
+      { word: 'father', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'pater', language: '拉丁语', year: -100 },
+      { word: 'pedre', language: '古法语', year: 1100 },
+      { word: 'père', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*h₂épo': [
+    { to: '法语', stages: [
+      { word: 'aqua', language: '拉丁语', year: -100 },
+      { word: 'ewe', language: '古法语', year: 1100, change: 'aqua 缩约音变' },
+      { word: 'eau', language: '法语', year: 2000 },
+    ]},
+    { to: '英语', stages: [
+      { word: 'aqua', language: '拉丁语', year: -100 },
+      { word: 'aqua', language: '英语', year: 1600, change: '拉丁语借词' },
+    ]},
+  ],
+  '*dʰómos': [
+    { to: '英语', stages: [
+      { word: 'domus', language: '拉丁语', year: -100 },
+      { word: 'dome', language: '英语', year: 1600, change: '经法语借入' },
+    ]},
+    { to: '俄语', stages: [
+      { word: '*domъ', language: '原始斯拉夫语', year: 400 },
+      { word: 'дом', language: '俄语', year: 2000 },
+    ]},
+  ],
+  '*wḗdr̥': [
+    { to: '英语', stages: [
+      { word: '*watōr', language: '原始日耳曼语', year: -500 },
+      { word: 'wæter', language: '古英语', year: 900 },
+      { word: 'water', language: '中古英语', year: 1300 },
+      { word: 'water', language: '英语', year: 2000 },
+    ]},
+    { to: '德语', stages: [
+      { word: '*watōr', language: '原始日耳曼语', year: -500 },
+      { word: 'wazzar', language: '古高地德语', year: 800 },
+      { word: 'Wasser', language: '德语', year: 2000 },
+    ]},
+  ],
+  '*sol-': [
+    { to: '英语', stages: [
+      { word: '*sunnōn', language: '原始日耳曼语', year: -500 },
+      { word: 'sunne', language: '古英语', year: 900 },
+      { word: 'sun', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'sol', language: '拉丁语', year: -100 },
+      { word: 'soleil', language: '古法语', year: 1100 },
+      { word: 'soleil', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*luks-': [
+    { to: '英语', stages: [
+      { word: '*leuhtą', language: '原始日耳曼语', year: -500 },
+      { word: 'lēoht', language: '古英语', year: 900 },
+      { word: 'light', language: '中古英语', year: 1300 },
+      { word: 'light', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'lux', language: '拉丁语', year: -100 },
+      { word: 'lumiere', language: '古法语', year: 1100 },
+      { word: 'lumière', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*nokʷt-': [
+    { to: '英语', stages: [
+      { word: '*nahts', language: '原始日耳曼语', year: -500, change: 'kʷ→h' },
+      { word: 'niht', language: '古英语', year: 900 },
+      { word: 'night', language: '中古英语', year: 1300 },
+      { word: 'night', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'nox', language: '拉丁语', year: -100 },
+      { word: 'nuit', language: '古法语', year: 1100 },
+      { word: 'nuit', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*okʷ-': [
+    { to: '英语', stages: [
+      { word: '*augō', language: '原始日耳曼语', year: -500 },
+      { word: 'ēage', language: '古英语', year: 900 },
+      { word: 'eye', language: '中古英语', year: 1300 },
+      { word: 'eye', language: '英语', year: 2000 },
+    ]},
+    { to: '法语', stages: [
+      { word: 'oculus', language: '拉丁语', year: -100 },
+      { word: 'oil', language: '古法语', year: 1100 },
+      { word: 'œil', language: '法语', year: 2000 },
+    ]},
+  ],
+  '*ed-': [
+    { to: '英语', stages: [
+      { word: '*etaną', language: '原始日耳曼语', year: -500 },
+      { word: 'etan', language: '古英语', year: 900 },
+      { word: 'eat', language: '英语', year: 2000 },
+    ]},
+    { to: '德语', stages: [
+      { word: '*etaną', language: '原始日耳曼语', year: -500 },
+      { word: 'ezzan', language: '古高地德语', year: 800 },
+      { word: 'essen', language: '德语', year: 2000 },
+    ]},
+  ],
+  '*ǵneh₃-': [
+    { to: '英语', stages: [
+      { word: '*knēaną', language: '原始日耳曼语', year: -500, change: '腭音 ǵ→k' },
+      { word: 'cnāwan', language: '古英语', year: 900 },
+      { word: 'know', language: '英语', year: 2000 },
+    ]},
+    { to: '拉丁语', stages: [
+      { word: 'gnōscere', language: '拉丁语', year: -100 },
+    ]},
+  ],
+  '*h₃érō': [
+    { to: '法语', stages: [
+      { word: 'aquila', language: '拉丁语', year: -100 },
+      { word: 'egle', language: '古法语', year: 1100 },
+      { word: 'aigle', language: '法语', year: 2000 },
+    ]},
+    { to: '英语', stages: [
+      { word: 'aquila', language: '拉丁语', year: -100 },
+      { word: 'egle', language: '古法语', year: 1100 },
+      { word: 'eagle', language: '英语', year: 1400, change: '古法语借词' },
+    ]},
+  ],
+  '*sker-': [
+    { to: '英语', stages: [
+      { word: '*skeraną', language: '原始日耳曼语', year: -500 },
+      { word: 'scieran', language: '古英语', year: 900 },
+      { word: 'shear', language: '英语', year: 2000 },
+    ]},
+    { to: '德语', stages: [
+      { word: '*skeraną', language: '原始日耳曼语', year: -500 },
+      { word: 'sceran', language: '古高地德语', year: 800 },
+      { word: 'scheren', language: '德语', year: 2000 },
+    ]},
+  ],
+  '*gʷen-': [
+    { to: '英语', stages: [
+      { word: '*kwēniz', language: '原始日耳曼语', year: -500, change: 'gʷ→kw' },
+      { word: 'cwēn', language: '古英语', year: 900 },
+      { word: 'queen', language: '英语', year: 2000 },
+    ]},
+    { to: '俄语', stages: [
+      { word: '*žena', language: '原始斯拉夫语', year: 400, change: 'gʷ→ž' },
+      { word: 'жена', language: '俄语', year: 2000 },
+    ]},
+  ],
+}
+
+export function buildTimeline(): TimelineChain[] {
+  return COGNATE_SETS.map(cs => {
+    const branches: TimelineBranch[] = (TIMELINE_BRANCHES[cs.root] || []).map(b => ({
+      to: b.to,
+      color: BRANCH_COLORS[b.to] || '#94a3b8',
+      stages: [{ word: cs.root, language: '原始印欧语', year: -4000 }, ...b.stages],
+    }))
+    return { root: cs.root, meaning: cs.meaning, branches }
+  })
 }

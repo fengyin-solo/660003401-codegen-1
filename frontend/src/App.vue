@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-slate-900 text-slate-200">
     <header class="border-b border-slate-700 px-6 py-4">
       <h1 class="text-2xl font-bold text-cyan-400">语言词源图谱与多语系演化追踪</h1>
-      <p class="text-sm text-slate-500 mt-1">D3.js力导向图 · 印欧语系演化 · 同源词对照 · 500+词根</p>
+      <p class="text-sm text-slate-500 mt-1">D3.js力导向图 · 印欧语系演化 · 演化时间轴 · 同源词对照 · 500+词根</p>
     </header>
     <div class="p-4 space-y-4">
       <div class="grid lg:grid-cols-3 gap-4">
@@ -42,6 +42,7 @@
           </div>
         </div>
       </div>
+      <EtymologyTimeline />
       <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
         <h3 class="text-sm font-bold text-slate-400 mb-3">同源词对照表</h3>
         <div class="flex gap-2 mb-3">
@@ -51,7 +52,7 @@
             <option v-for="f in LANGUAGE_FAMILIES" :key="f.id" :value="f.id">{{ f.name }}</option>
           </select>
         </div>
-        <div class="overflow-x-auto max-h-64 overflow-y-auto">
+        <div ref="tableRef" class="overflow-x-auto max-h-64 overflow-y-auto">
           <table class="w-full text-xs">
             <thead class="sticky top-0 bg-slate-700">
               <tr>
@@ -66,7 +67,10 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="cs in store.filteredCognates" :key="cs.root" class="border-t border-slate-700 hover:bg-slate-700">
+              <tr v-for="cs in store.filteredCognates" :key="cs.root" :data-root="cs.root"
+                  class="border-t border-slate-700 hover:bg-slate-700 cursor-pointer"
+                  :class="{ 'bg-cyan-900/30': cs.root === store.selectedCognateRoot }"
+                  @click="store.selectCognate(cs.root)">
                 <td class="px-2 py-1.5 font-mono text-slate-200 font-bold">{{ cs.root }}</td>
                 <td class="px-2 py-1.5 text-slate-400">{{ cs.meaning }}</td>
                 <td class="px-2 py-1.5 font-mono text-cyan-300">{{ cs.languages['英语'] || '—' }}</td>
@@ -85,12 +89,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import * as d3 from 'd3'
 import { useEtymologyStore, LANGUAGE_FAMILIES } from './store/etymology'
+import EtymologyTimeline from './components/EtymologyTimeline.vue'
 
 const store = useEtymologyStore()
 const svgRef = ref<SVGSVGElement | null>(null)
+const tableRef = ref<HTMLElement | null>(null)
 const COLORS: Record<string, string> = { ie: '#3b82f6', st: '#22c55e', aa: '#f59e0b', ural: '#8b5cf6' }
 
 function drawGraph() {
@@ -130,4 +136,20 @@ function drawGraph() {
 }
 
 onMounted(() => { setTimeout(drawGraph, 100) })
+
+// 联动：时间轴/表格选中词根时，高亮力导向图中对应节点
+watch(() => store.selectedNode, (sel) => {
+  if (!svgRef.value) return
+  d3.select(svgRef.value).selectAll<SVGCircleElement, any>('circle')
+    .attr('stroke', (d: any) => sel && d.id === sel.id ? '#22d3ee' : '#1e293b')
+    .attr('stroke-width', (d: any) => sel && d.id === sel.id ? 3 : 1.5)
+})
+
+// 联动：选中词根时，滚动同源词表到对应行
+watch(() => store.selectedCognateRoot, async (root) => {
+  if (!root) return
+  await nextTick()
+  tableRef.value?.querySelector(`[data-root="${CSS.escape(root)}"]`)
+    ?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+})
 </script>
